@@ -1,0 +1,5 @@
+{
+  "name": "TuanPhim - Modern Movie Streaming",
+  "description": "Nền tảng xem phim hiện đại sử dụng React, Tailwind CSS và Google Sheets Integration. Hỗ trợ trình phát video cao cấp và quản lý danh sách cá nhân.",
+  "requestFramePermissions": []
+}
