@@ -28,14 +28,14 @@ const Home: React.FC = () => {
              </div>
           </div>
           
-          <h1 className="text-5xl md:text-8xl font-black mb-6 leading-[0.9] tracking-tighter">
+          <h1 className="text-5xl md:text-8xl font-heading font-black mb-6 leading-[0.85] tracking-tighter">
             {featured.title}
           </h1>
           
-          <div className="flex items-center gap-8 mb-8 text-neutral-300 font-bold uppercase tracking-widest text-[11px]">
+          <div className="flex items-center gap-8 mb-8 text-neutral-300 font-bold uppercase tracking-[0.15em] text-[10px]">
             <span className="flex items-center gap-2"><Calendar size={16} className="text-yellow-400" /> {featured.year}</span>
             <span className="flex items-center gap-2"><Clock size={16} className="text-yellow-400" /> {featured.duration}</span>
-            <span className="px-2 py-0.5 border border-white/20 rounded">{featured.genres[0]}</span>
+            <span className="px-2 py-0.5 border border-white/20 rounded-md">{featured.genres[0]}</span>
           </div>
           
           <p className="text-lg text-neutral-400 mb-10 line-clamp-3 leading-relaxed max-w-2xl font-medium">

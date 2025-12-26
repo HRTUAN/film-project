@@ -91,7 +91,7 @@ const Watch: React.FC = () => {
   if (error || !movie) return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
       <AlertCircle size={80} className="text-red-500/20 mb-8" />
-      <h2 className="text-3xl font-black mb-4 tracking-tight">Phòng chiếu đang bảo trì</h2>
+      <h2 className="text-3xl font-heading font-black mb-4 tracking-tight uppercase">Phòng chiếu đang bảo trì</h2>
       <p className="text-neutral-500 max-w-md mb-10 font-medium">{error}</p>
       <Link to="/" className="bg-yellow-400 text-black px-10 py-4 rounded-2xl font-black shadow-xl shadow-yellow-400/20">QUAY LẠI TRANG CHỦ</Link>
     </div>
@@ -121,15 +121,15 @@ const Watch: React.FC = () => {
         <div className="lg:col-span-2">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">{movie.title}</h1>
+              <h1 className="text-4xl md:text-5xl font-heading font-black tracking-tighter mb-4 uppercase leading-none">{movie.title}</h1>
               <div className="flex items-center gap-6">
                  <div className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded-xl font-black shadow-lg shadow-yellow-400/20">
                     <Star size={18} fill="currentColor" /> {movie.rating}
                  </div>
-                 <span className="text-neutral-500 font-black text-xs uppercase tracking-widest">{movie.year} • {movie.duration}</span>
+                 <span className="text-neutral-500 font-black text-[11px] uppercase tracking-widest">{movie.year} • {movie.duration}</span>
               </div>
             </div>
-            <button className="flex items-center gap-2 px-6 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-xl font-bold border border-neutral-800 transition-all text-sm">
+            <button className="flex items-center gap-2 px-6 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-xl font-black border border-neutral-800 transition-all text-[11px] uppercase tracking-widest">
                <Share2 size={18} className="text-yellow-400" /> CHIA SẺ
             </button>
           </div>
@@ -139,7 +139,7 @@ const Watch: React.FC = () => {
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
-                className={`pb-4 text-xs font-black uppercase tracking-[0.2em] border-b-2 transition-all ${
+                className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] border-b-2 transition-all ${
                   activeTab === tab ? 'border-yellow-400 text-yellow-400' : 'border-transparent text-neutral-500 hover:text-white'
                 }`}
               >
@@ -182,7 +182,7 @@ const Watch: React.FC = () => {
         <div className="space-y-8">
           <div className="flex items-center gap-3 mb-2">
              <span className="w-1.5 h-6 bg-yellow-400 rounded-full"></span>
-             <h3 className="text-xl font-black uppercase tracking-tight">Phim đề xuất</h3>
+             <h3 className="text-xl font-heading font-black uppercase tracking-tight">Phim đề xuất</h3>
           </div>
           <div className="flex flex-col gap-5">
             {MOCK_MOVIES.slice(0, 5).map(rec => (
@@ -191,7 +191,7 @@ const Watch: React.FC = () => {
                    <img src={rec.poster} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
                 </div>
                 <div className="flex flex-col justify-center">
-                  <h4 className="font-black text-sm leading-snug group-hover:text-yellow-400 transition-colors line-clamp-2 mb-2">{rec.title}</h4>
+                  <h4 className="font-heading font-black text-sm leading-tight group-hover:text-yellow-400 transition-colors line-clamp-2 mb-2 uppercase">{rec.title}</h4>
                   <div className="text-[10px] text-neutral-500 font-black uppercase tracking-widest mb-3">{rec.year} • {rec.genres[0]}</div>
                   <div className="flex items-center gap-1.5 text-yellow-400 text-xs font-black">
                     <Star size={14} fill="currentColor" /> {rec.rating}

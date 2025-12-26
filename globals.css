@@ -10,8 +10,14 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-heading {
+  font-family: 'Archivo', sans-serif;
 }
 
 ::-webkit-scrollbar {
@@ -36,4 +42,9 @@ body {
 }
 .animate-ping-once {
   animation: ping-once 0.6s ease-out forwards;
+}
+
+/* Custom text tracking for headings */
+h1, h2, h3 {
+  letter-spacing: -0.04em;
 }

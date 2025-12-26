@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { RefreshCcw, FolderHeart, Film, AlertCircle } from 'lucide-react';
+import { RefreshCcw, FolderHeart, AlertCircle } from 'lucide-react';
 import { Movie } from '../types';
 import MovieCard from '../components/MovieCard';
 
@@ -28,7 +27,7 @@ const generateMovieFromSheet = (name: string, url: string, index: number): Movie
     slug: slug,
     poster: `https://picsum.photos/seed/${posterSeed}/400/600`,
     banner: `https://picsum.photos/seed/${posterSeed + 5}/1920/1080`,
-    description: `Phim "${name}" được phát từ link riêng của bạn: ${url}. Nội dung này được đồng bộ tự động từ Google Sheets cá nhân.`,
+    description: `Phim "${name}" được phát từ link cá nhân. Nội dung này được đồng bộ từ Google Sheets.`,
     year: 2024,
     duration: "HD",
     country: "Cá nhân",
@@ -58,14 +57,13 @@ const MyMovies: React.FC = () => {
       const parsedMovies: Movie[] = [];
       
       lines.forEach((line, index) => {
-        // Regex để tách CSV chuẩn
         const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
         if (parts.length >= 2) {
           const name = parts[0].replace(/"/g, '').trim();
           const url = parts[1].replace(/"/g, '').trim();
           
           if (!name || name.toLowerCase() === 'name' || name.toLowerCase() === 'tên phim') return;
-          if (url.startsWith('http')) {
+          if (url.includes('http')) {
             parsedMovies.push(generateMovieFromSheet(name, url, index));
           }
         }
@@ -92,15 +90,15 @@ const MyMovies: React.FC = () => {
              <FolderHeart size={32} />
           </div>
           <div>
-            <h1 className="text-4xl font-black mb-1">Kho phim Sheet</h1>
-            <p className="text-neutral-500 text-sm">Dữ liệu trực tiếp từ Google Spreadsheets của bạn</p>
+            <h1 className="text-4xl font-heading font-black mb-1 uppercase tracking-tight">Kho phim Sheet</h1>
+            <p className="text-neutral-500 text-sm font-medium">Dữ liệu trực tiếp từ Google Spreadsheets</p>
           </div>
         </div>
         
         <button 
           onClick={fetchSheetData}
           disabled={loading}
-          className="flex items-center gap-2 px-6 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-xl text-sm font-bold border border-neutral-800 transition-all disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-xl text-sm font-black border border-neutral-800 transition-all disabled:opacity-50 uppercase tracking-widest"
         >
           <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} />
           Đồng bộ lại
@@ -110,7 +108,7 @@ const MyMovies: React.FC = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-40">
            <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-           <p className="text-neutral-500 font-bold text-xs uppercase tracking-widest">Đang đọc dữ liệu...</p>
+           <p className="text-neutral-500 font-black text-[10px] uppercase tracking-widest">Đang đọc dữ liệu...</p>
         </div>
       ) : error ? (
         <div className="py-20 text-center bg-red-500/5 rounded-3xl border border-red-500/20">
