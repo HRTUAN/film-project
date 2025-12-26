@@ -25,10 +25,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
   const [isReady, setIsReady] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
-  const [isSwiping, setIsSwiping] = useState(false);
-  const [swipeStartX, setSwipeStartX] = useState(0);
-  const [swipeSeekTime, setSwipeSeekTime] = useState(0);
-
   const [skipFeedback, setSkipFeedback] = useState<{ 
     type: 'left' | 'right' | null; 
     text: string;
@@ -36,7 +32,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
   }>({ type: null, text: '', visible: false });
 
   const lastTap = useRef(0);
+  const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Khởi tạo Video
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -47,7 +45,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
     const isHls = embedUrl.includes('.m3u8');
 
     if (isHls && Hls.isSupported()) {
-      const hls = new Hls({ capLevelToPlayerSize: true, autoStartLoad: true });
+      const hls = new Hls({ capLevelToPlayerSize: true });
       hls.loadSource(embedUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -59,20 +57,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
       return () => hls.destroy();
     } else {
       video.src = embedUrl;
-      const handleLoadedMetadata = () => {
+      video.onloadedmetadata = () => {
         setIsReady(true);
         if (initialPercent > 0) {
           video.currentTime = (initialPercent / 100) * video.duration;
         }
       };
-      video.addEventListener('loadedmetadata', handleLoadedMetadata);
-      return () => video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     }
   }, [embedUrl]);
 
+  // Đồng bộ Fullscreen
   useEffect(() => {
     const handleFsChange = () => {
-      const isFs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement || (document as any).mozFullScreenElement || (document as any).msFullscreenElement);
+      const isFs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
       setIsFullscreen(isFs);
     };
     document.addEventListener('fullscreenchange', handleFsChange);
@@ -83,70 +80,78 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
     };
   }, []);
 
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    if (showControls && isPlaying) {
-      timer = setTimeout(() => setShowControls(false), 3500);
+  const resetControlsTimeout = () => {
+    if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
+    setShowControls(true);
+    if (isPlaying) {
+      controlsTimeout.current = setTimeout(() => setShowControls(false), 3000);
     }
-    return () => timer && clearTimeout(timer);
-  }, [showControls, isPlaying]);
+  };
 
-  const togglePlay = (e?: React.MouseEvent | React.TouchEvent) => {
+  const togglePlay = (e?: any) => {
     if (e) e.stopPropagation();
     if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.pause();
-    } else {
-      videoRef.current.play().catch(err => console.log("Play failed:", err));
-    }
+    if (isPlaying) videoRef.current.pause();
+    else videoRef.current.play().catch(() => {});
     setIsPlaying(!isPlaying);
-    setShowControls(true);
+    resetControlsTimeout();
   };
 
   const skipTime = (seconds: number) => {
     if (!videoRef.current) return;
     videoRef.current.currentTime += seconds;
-    
-    const side = seconds > 0 ? 'right' : 'left';
     setSkipFeedback({ 
-      type: side, 
-      text: `${seconds > 0 ? '+' : '-'}${Math.abs(seconds)}s`, 
+      type: seconds > 0 ? 'right' : 'left', 
+      text: `${seconds > 0 ? '+' : '-'}${Math.abs(seconds) >= 60 ? Math.floor(Math.abs(seconds)/60) + 'm' : Math.abs(seconds) + 's'}`, 
       visible: true 
     });
     setTimeout(() => setSkipFeedback(prev => ({ ...prev, visible: false })), 600);
+    resetControlsTimeout();
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setSwipeStartX(e.touches[0].clientX);
-    setIsSwiping(false);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const currentX = e.touches[0].clientX;
-    const diff = currentX - swipeStartX;
-    if (Math.abs(diff) > 40) {
-      setIsSwiping(true);
-      setSwipeSeekTime(Math.floor(diff / 10));
+  const handleFullscreen = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const container = containerRef.current;
+    const video = videoRef.current;
+    if (!container || !video) return;
+    
+    try {
+      if (isFullscreen) {
+        const exitFs = document.exitFullscreen || (document as any).webkitExitFullscreen;
+        if (exitFs) await exitFs.call(document);
+      } else {
+        const reqFs = container.requestFullscreen || (container as any).webkitRequestFullscreen;
+        if (reqFs) {
+          await reqFs.call(container);
+          if (window.screen.orientation && (window.screen.orientation as any).lock) {
+            await (window.screen.orientation as any).lock('landscape').catch(() => {});
+          }
+        } else if ((video as any).webkitEnterFullscreen) {
+          (video as any).webkitEnterFullscreen();
+        }
+      }
+    } catch (err) {
+      console.error("Fullscreen Error:", err);
     }
   };
 
-  const handleTouchEnd = () => {
-    if (isSwiping && videoRef.current) {
-      videoRef.current.currentTime += swipeSeekTime;
-    }
-    setIsSwiping(false);
-  };
+  const handleTapZone = (side: 'left' | 'center' | 'right', e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const now = Date.now();
+    const isDoubleTap = now - lastTap.current < 300;
+    lastTap.current = now;
 
-  const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
-    const current = videoRef.current.currentTime;
-    const dur = videoRef.current.duration;
-    setCurrentTime(current);
-    setDuration(dur);
-    const p = (current / dur) * 100;
-    if (!isNaN(p)) {
-      setProgress(p);
-      onProgress?.(p);
+    if (isDoubleTap) {
+      if (side === 'left') skipTime(-10);
+      if (side === 'right') skipTime(10);
+    } else {
+      setTimeout(() => {
+        if (lastTap.current === now) {
+          if (showControls) togglePlay();
+          else setShowControls(true);
+        }
+      }, 300);
     }
   };
 
@@ -155,220 +160,130 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
     if (!videoRef.current || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const p = Math.max(0, Math.min(1, x / rect.width));
-    videoRef.current.currentTime = p * duration;
-  };
-
-  const handleFullscreen = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const container = containerRef.current;
-    if (!container) return;
-    
-    try {
-      if (isFullscreen) {
-        const exitFs = document.exitFullscreen || (document as any).webkitExitFullscreen || (document as any).msExitFullscreen;
-        if (exitFs) await exitFs.call(document);
-        if (window.screen.orientation && window.screen.orientation.unlock) {
-          window.screen.orientation.unlock();
-        }
-      } else {
-        const reqFs = container.requestFullscreen || (container as any).webkitRequestFullscreen || (container as any).msRequestFullscreen;
-        if (reqFs) {
-          await reqFs.call(container);
-          if (window.screen.orientation && (window.screen.orientation as any).lock) {
-            try {
-              await (window.screen.orientation as any).lock('landscape');
-            } catch (err) {
-              console.warn("Orientation lock error:", err);
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Fullscreen toggle failed:", err);
-    }
-  };
-
-  const handleTapZone = (side: 'left' | 'center' | 'right', e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
-    
-    if (now - lastTap.current < DOUBLE_TAP_DELAY) {
-      // Double tap
-      if (side === 'left') skipTime(-10);
-      if (side === 'right') skipTime(10);
-      lastTap.current = 0; // Reset
-    } else {
-      // Single tap
-      lastTap.current = now;
-      setTimeout(() => {
-        if (lastTap.current === now) {
-          togglePlay();
-        }
-      }, DOUBLE_TAP_DELAY);
-    }
+    videoRef.current.currentTime = (x / rect.width) * duration;
   };
 
   const formatTime = (time: number) => {
-    if (isNaN(time) || time < 0) return "00:00";
     const h = Math.floor(time / 3600);
     const m = Math.floor((time % 3600) / 60);
     const s = Math.floor(time % 60);
     return `${h > 0 ? h + ':' : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const changeSpeed = (s: string) => {
-    setSpeed(s);
-    if (videoRef.current) videoRef.current.playbackRate = parseFloat(s);
-    setShowSettings(false);
-  };
-
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full aspect-video bg-black rounded-2xl overflow-hidden group shadow-2xl ring-1 ring-neutral-800 select-none ${isFullscreen ? 'rounded-none border-none h-screen w-screen fixed inset-0 z-[9999]' : ''}`}
-      onMouseMove={() => setShowControls(true)}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      className={`relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl group select-none ${isFullscreen ? 'fixed inset-0 z-[9999] rounded-none w-screen h-screen' : ''}`}
+      onMouseMove={resetControlsTimeout}
     >
+      {/* Video Layer */}
       <video
         ref={videoRef}
-        className="w-full h-full object-contain pointer-events-none"
-        onTimeUpdate={handleTimeUpdate}
+        className="w-full h-full object-contain"
+        onTimeUpdate={() => {
+          if (videoRef.current) {
+            setCurrentTime(videoRef.current.currentTime);
+            setDuration(videoRef.current.duration);
+            setProgress((videoRef.current.currentTime / videoRef.current.duration) * 100);
+            onProgress?.((videoRef.current.currentTime / videoRef.current.duration) * 100);
+          }
+        }}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         playsInline
       />
 
-      {/* 1. Vùng tương tác Double Tap (Z-10) */}
+      {/* 1. INTERACTION ZONES (Z-10) */}
       <div className="absolute inset-0 z-10 flex">
         <div className="w-[30%] h-full cursor-pointer" onClick={(e) => handleTapZone('left', e)}></div>
         <div className="flex-grow h-full cursor-pointer" onClick={(e) => handleTapZone('center', e)}></div>
         <div className="w-[30%] h-full cursor-pointer" onClick={(e) => handleTapZone('right', e)}></div>
       </div>
 
-      {/* 2. Feedback Overlay (Double Tap / Swipe) (Z-20) */}
-      <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">
+      {/* 2. FEEDBACK LAYER (Z-20) */}
+      <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-around">
         {skipFeedback.visible && (
-          <div className={`absolute flex flex-col items-center animate-ping-once bg-yellow-400/20 p-8 rounded-full backdrop-blur-md ${skipFeedback.type === 'left' ? 'left-[15%]' : 'right-[15%]'}`}>
-            {skipFeedback.type === 'left' ? <Rewind size={40} className="text-yellow-400" fill="currentColor" /> : <FastForward size={40} className="text-yellow-400" fill="currentColor" />}
-            <span className="text-xl font-black text-white mt-2">{skipFeedback.text}</span>
-          </div>
-        )}
-        {isSwiping && (
-          <div className="bg-black/80 backdrop-blur-xl px-10 py-6 rounded-[2.5rem] border border-white/10 flex flex-col items-center gap-3">
-            <div className="flex items-center gap-4 text-white">
-              {swipeSeekTime < 0 ? <Rewind fill="white" size={32} /> : <FastForward fill="white" size={32} />}
-              <span className="text-5xl font-black tabular-nums">{swipeSeekTime > 0 ? '+' : ''}{swipeSeekTime}s</span>
-            </div>
-            <p className="text-yellow-400 font-bold text-[10px] uppercase tracking-widest">Đang kéo để tua</p>
+          <div className={`flex flex-col items-center animate-ping-once bg-yellow-400/20 p-6 md:p-10 rounded-full backdrop-blur-md ${skipFeedback.type === 'left' ? 'ml-10 mr-auto' : 'mr-10 ml-auto'}`}>
+            {skipFeedback.type === 'left' ? <Rewind size={32} fill="currentColor" className="text-yellow-400" /> : <FastForward size={32} fill="currentColor" className="text-yellow-400" />}
+            <span className="text-white font-black mt-2 text-sm">{skipFeedback.text}</span>
           </div>
         )}
       </div>
 
-      {/* 3. Nút Play Trung Tâm (Z-30) */}
-      <div className={`absolute inset-0 z-30 flex items-center justify-center pointer-events-none transition-all duration-300 ${!isPlaying || showControls ? 'opacity-100' : 'opacity-0 scale-150'}`}>
-         {isReady ? (
-           <button 
-             onClick={togglePlay} 
-             className="w-20 h-20 md:w-28 md:h-28 bg-yellow-400 rounded-full flex items-center justify-center text-black shadow-2xl pointer-events-auto active:scale-90 transition-transform"
-           >
-             {isPlaying ? <Pause size={40} fill="currentColor" /> : <Play size={40} className="ml-2" fill="currentColor" />}
-           </button>
-         ) : (
-           <div className="flex flex-col items-center gap-4">
-             <Loader2 size={40} className="text-yellow-400 animate-spin" />
-             <span className="text-white/40 text-[9px] font-black uppercase tracking-[0.2em]">Đang tải...</span>
-           </div>
-         )}
-      </div>
-
-      {/* 4. Controls Main (Z-40) */}
-      <div 
-        className={`absolute inset-0 z-40 flex flex-col justify-between transition-opacity duration-500 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none ${
-          showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        {/* Top Bar */}
-        <div className="p-4 flex items-center justify-between pointer-events-auto">
-          <div className="flex items-center gap-3">
-             <div className="px-2 py-1 bg-yellow-400 text-black text-[8px] font-black rounded uppercase">VIP PLAYER</div>
-             <span className="text-[10px] font-bold text-white/40 truncate max-w-[120px]">TUANPHIM.XYZ</span>
-          </div>
-          <button onClick={() => window.location.reload()} className="p-2 text-white/40 hover:text-white transition-colors">
-            <RefreshCcw size={18} />
+      {/* 3. CENTER PLAY BUTTON (Z-30) */}
+      <div className={`absolute inset-0 z-30 flex items-center justify-center pointer-events-none transition-all duration-300 ${!isPlaying || showControls ? 'opacity-100' : 'opacity-0 scale-110'}`}>
+        {isReady ? (
+          <button 
+            onClick={togglePlay}
+            className="w-16 h-16 md:w-24 md:h-24 bg-yellow-400 rounded-full flex items-center justify-center text-black shadow-2xl pointer-events-auto active:scale-90 transition-transform"
+          >
+            {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} className="ml-1 md:ml-2" fill="currentColor" />}
           </button>
+        ) : (
+          <Loader2 size={40} className="text-yellow-400 animate-spin" />
+        )}
+      </div>
+
+      {/* 4. CONTROLS OVERLAY (Z-40) */}
+      <div className={`absolute inset-0 z-40 flex flex-col justify-between bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none transition-opacity duration-500 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0'}`}>
+        {/* Top */}
+        <div className="p-3 md:p-4 flex items-center justify-between pointer-events-auto">
+          <span className="text-[9px] font-black text-white/50 tracking-widest uppercase">TuanPhim Media</span>
+          <button onClick={() => window.location.reload()} className="text-white/40 hover:text-white"><RefreshCcw size={14} /></button>
         </div>
 
-        {/* Bottom Bar - Pushed to absolute bottom on mobile */}
-        <div className="px-4 md:px-8 md:pb-8 md:space-y-6 pointer-events-auto">
-          {/* Progress Bar */}
+        {/* Bottom Bar - Pushed lower on mobile */}
+        <div className="px-3 pb-1 md:px-8 md:pb-8 space-y-1 md:space-y-4 pointer-events-auto">
+          {/* Progress Bar - Thinner on mobile */}
           <div className="relative h-4 flex items-center cursor-pointer group" onClick={handleSeek}>
-            <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-               <div className="h-full bg-yellow-400 transition-all shadow-[0_0_10px_rgba(250,204,21,0.6)]" style={{ width: `${progress}%` }}></div>
+            <div className="w-full h-0.5 md:h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="h-full bg-yellow-400 shadow-[0_0_10px_#facc15]" style={{ width: `${progress}%` }}></div>
             </div>
-            <div className="absolute h-4 w-4 bg-yellow-400 rounded-full shadow-lg scale-0 group-hover:scale-100 sm:scale-100 transition-transform pointer-events-none" style={{ left: `calc(${progress}% - 8px)` }}></div>
+            <div className="absolute h-3 w-3 md:h-4 md:w-4 bg-yellow-400 rounded-full scale-0 group-hover:scale-100 sm:scale-100 transition-transform" style={{ left: `calc(${progress}% - 6px)` }}></div>
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 md:gap-8">
-              <button onClick={() => togglePlay()} className="text-white hover:text-yellow-400 transition-colors">
-                {isPlaying ? <Pause size={30} fill="currentColor" /> : <Play size={30} fill="currentColor" />}
+            <div className="flex items-center gap-2 md:gap-6">
+              <button onClick={togglePlay} className="text-white hover:text-yellow-400 transition-colors">
+                {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
               </button>
-
-              {/* Tua nhanh tích hợp - Gọn hơn trên mobile */}
-              <div className="flex items-center gap-0.5 bg-white/5 p-1 rounded-xl border border-white/5">
-                 <button onClick={(e) => { e.stopPropagation(); skipTime(-600); }} className="p-1.5 text-white/40 hover:text-yellow-400 flex flex-col items-center">
-                    <SkipBack size={14} />
-                    <span className="text-[7px] font-black">-10m</span>
-                 </button>
-                 <button onClick={(e) => { e.stopPropagation(); skipTime(-60); }} className="p-1.5 text-white/40 hover:text-yellow-400 flex flex-col items-center">
-                    <ChevronLeft size={14} />
-                    <span className="text-[7px] font-black">-1m</span>
-                 </button>
-                 <button onClick={(e) => { e.stopPropagation(); skipTime(60); }} className="p-1.5 text-white/40 hover:text-yellow-400 flex flex-col items-center">
-                    <ChevronRight size={14} />
-                    <span className="text-[7px] font-black">+1m</span>
-                 </button>
-                 <button onClick={(e) => { e.stopPropagation(); skipTime(600); }} className="p-1.5 text-white/40 hover:text-yellow-400 flex flex-col items-center">
-                    <SkipForward size={14} />
-                    <span className="text-[7px] font-black">+10m</span>
-                 </button>
+              
+              {/* Skip Controls - Added 10m buttons */}
+              <div className="flex items-center gap-0.5 bg-white/5 p-0.5 md:p-1 rounded-lg border border-white/5">
+                <button onClick={() => skipTime(-600)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center">
+                   <SkipBack size={12} /><span className="text-[6px] font-black">-10m</span>
+                </button>
+                <button onClick={() => skipTime(-60)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center">
+                   <ChevronLeft size={12} /><span className="text-[6px] font-black">-1m</span>
+                </button>
+                <button onClick={() => skipTime(60)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center">
+                   <ChevronRight size={12} /><span className="text-[6px] font-black">+1m</span>
+                </button>
+                <button onClick={() => skipTime(600)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center">
+                   <SkipForward size={12} /><span className="text-[6px] font-black">+10m</span>
+                </button>
               </div>
 
-              <div className="hidden sm:flex text-[11px] font-black text-white/80 tabular-nums">
-                <span className="text-yellow-400">{formatTime(currentTime)}</span>
-                <span className="mx-2 opacity-20">/</span>
-                <span>{formatTime(duration)}</span>
+              <div className="hidden sm:block text-[10px] font-black text-white/80 tabular-nums">
+                <span className="text-yellow-400">{formatTime(currentTime)}</span> / {formatTime(duration)}
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="relative">
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }} 
-                  className={`flex items-center gap-1.5 text-[9px] font-black px-3 py-1.5 rounded-lg border transition-all ${showSettings ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-white/5 text-white/60 border-white/10'}`}
-                >
-                  <Settings size={14} /> {speed}
+                <button onClick={() => setShowSettings(!showSettings)} className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-white/60 flex items-center gap-1">
+                  <Settings size={10} /> {speed}
                 </button>
                 {showSettings && (
-                  <div className="absolute right-0 bottom-full mb-3 w-32 bg-neutral-900 border border-white/10 rounded-2xl p-1.5 shadow-2xl grid grid-cols-2 gap-1 animate-in slide-in-from-bottom-2">
+                  <div className="absolute bottom-full right-0 mb-2 w-20 bg-neutral-900 border border-white/10 rounded-xl p-1 flex flex-col gap-1">
                     {['0.5x', '1x', '1.5x', '2x'].map(s => (
-                      <button key={s} onClick={() => changeSpeed(s)} className={`p-2 rounded-lg text-[9px] font-black transition-all ${speed === s ? 'bg-yellow-400 text-black' : 'hover:bg-white/5 text-neutral-400'}`}>{s}</button>
+                      <button key={s} onClick={() => { setSpeed(s); if(videoRef.current) videoRef.current.playbackRate = parseFloat(s); setShowSettings(false); }} className={`p-1.5 text-left rounded text-[8px] font-black ${speed === s ? 'bg-yellow-400 text-black' : 'text-white/40 hover:bg-white/5'}`}>{s}</button>
                     ))}
                   </div>
                 )}
               </div>
-
-              <button 
-                onClick={handleFullscreen} 
-                className="p-3 bg-yellow-400 text-black rounded-xl hover:bg-yellow-300 active:scale-95 transition-all shadow-lg flex items-center gap-2 font-black text-[10px] uppercase"
-              >
-                <Maximize size={16} />
-                <span className="hidden sm:inline">Toàn màn hình</span>
+              <button onClick={handleFullscreen} className="px-3 py-1.5 md:py-2 bg-yellow-400 text-black rounded-lg md:rounded-xl flex items-center gap-1.5 font-black text-[9px] uppercase shadow-lg shadow-yellow-400/20 active:scale-95 transition-all">
+                <Maximize size={12} /> <span className="hidden sm:inline">Toàn màn hình</span>
               </button>
             </div>
           </div>
@@ -382,7 +297,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
           100% { transform: scale(1.4); opacity: 0; }
         }
         .animate-ping-once {
-          animation: ping-once 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+          animation: ping-once 0.6s cubic-bezier(0,0,0.2,1) forwards;
         }
       `}</style>
     </div>
