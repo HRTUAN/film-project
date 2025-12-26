@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from 'react';
 import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -22,7 +23,7 @@ const App: React.FC = () => {
           <Suspense fallback={
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
               <Loader2 className="animate-spin text-yellow-400" size={48} />
-              <p className="text-neutral-500 text-xs font-black uppercase tracking-widest">Đang tải TuanPhim...</p>
+              <p className="text-neutral-500 text-xs font-black uppercase tracking-widest">Đang tải tuanporm...</p>
             </div>
           }>
             <Routes>
@@ -41,12 +42,12 @@ const App: React.FC = () => {
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex flex-col items-center md:items-start gap-2">
               <Link to="/" className="text-2xl font-black text-yellow-400 tracking-tighter">
-                TUAN<span className="text-white">PHIM</span>
+                TUAN<span className="text-white">PORM</span>
               </Link>
               <p className="text-neutral-500 text-xs font-medium">Trải nghiệm điện ảnh đỉnh cao mỗi ngày.</p>
             </div>
             
-            <p className="text-neutral-400 text-sm order-3 md:order-2">© 2024 TuanPhim Studio. All rights reserved.</p>
+            <p className="text-neutral-400 text-sm order-3 md:order-2">© 2024 tuanporm Studio. All rights reserved.</p>
             
             <div className="flex gap-6 text-neutral-400 text-sm font-bold order-2 md:order-3 uppercase tracking-widest text-[10px]">
               <Link to="/under-development" className="hover:text-yellow-400 transition-colors">Điều khoản</Link>

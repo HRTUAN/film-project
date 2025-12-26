@@ -246,7 +246,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
         <div className="p-3 md:p-5 flex items-center justify-between pointer-events-auto">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
-            <span className="text-[8px] md:text-[10px] font-black text-white/50 tracking-widest uppercase">TuanPhim Player</span>
+            <span className="text-[8px] md:text-[10px] font-black text-white/50 tracking-widest uppercase">tuanporm Player</span>
           </div>
           <button onClick={() => window.location.reload()} className="p-2 text-white/30 hover:text-white transition-colors"><RefreshCcw size={14} /></button>
         </div>

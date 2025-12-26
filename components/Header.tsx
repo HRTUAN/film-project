@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Bell, User, Menu, X, ChevronDown, LayoutGrid, FolderHeart, Tv } from 'lucide-react';
@@ -54,7 +55,7 @@ const Header: React.FC = () => {
       <header className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-300 px-6 lg:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-neutral-950/95 backdrop-blur-md shadow-lg py-3' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
         <div className="flex items-center gap-10">
           <Link to="/" className="flex items-center gap-1 group">
-            <span className="text-2xl font-heading font-black tracking-tighter text-yellow-400">TUAN<span className="text-white group-hover:text-yellow-400 transition-colors">PHIM</span></span>
+            <span className="text-2xl font-heading font-black tracking-tighter text-yellow-400">TUAN<span className="text-white group-hover:text-yellow-400 transition-colors">PORM</span></span>
           </Link>
           <nav className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
@@ -102,7 +103,7 @@ const Header: React.FC = () => {
         <div className={`absolute top-0 right-0 h-full w-[80%] max-w-sm bg-neutral-950 shadow-2xl border-l border-white/5 transition-transform duration-500 transform ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="flex flex-col h-full p-8">
             <div className="flex items-center justify-between mb-12">
-              <span className="text-xl font-heading font-black text-yellow-400 tracking-tighter">TUAN<span className="text-white">MENU</span></span>
+              <span className="text-xl font-heading font-black text-yellow-400 tracking-tighter">TUAN<span className="text-white">PORM</span></span>
               <button onClick={() => setMobileMenuOpen(false)} className="p-2 bg-white/5 rounded-full text-white">
                 <X size={24} />
               </button>

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Construction, ArrowLeft, Rocket, Sparkles } from 'lucide-react';
 
@@ -21,7 +21,7 @@ const UnderDevelopment: React.FC = () => {
       </h1>
       
       <p className="text-neutral-500 max-w-lg mx-auto text-lg mb-10 leading-relaxed font-medium">
-        Tính năng này đang được đội ngũ <span className="text-white font-bold">TuanPhim</span> phát triển với công nghệ AI tiên tiến nhất. Hãy quay lại sau nhé!
+        Tính năng này đang được đội ngũ <span className="text-white font-bold">tuanporm</span> phát triển với công nghệ AI tiên tiến nhất. Hãy quay lại sau nhé!
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -32,7 +32,7 @@ const UnderDevelopment: React.FC = () => {
           <ArrowLeft size={18} /> QUAY LẠI TRANG CHỦ
         </Link>
         <div className="flex items-center gap-2 text-neutral-400 px-8 py-3 bg-neutral-900 rounded-xl border border-neutral-800 font-bold">
-           <Sparkles size={18} className="text-yellow-400" /> TuanPhim v2.0
+           <Sparkles size={18} className="text-yellow-400" /> tuanporm v2.0
         </div>
       </div>
 
