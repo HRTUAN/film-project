@@ -5,7 +5,7 @@ export const GENRES = ["Hành động", "Tình cảm", "Viễn tưởng", "Kinh 
 export const COUNTRIES = ["Mỹ", "Hàn Quốc", "Việt Nam", "Nhật Bản", "Trung Quốc", "Anh"];
 export const YEARS = [2024, 2023, 2022, 2021, 2020, 2019];
 
-const STREAM_URL = "https://video.webhalong.id.vn/video.mp4";
+const STREAM_URL = "https://video.webhalong.id.vn/videos/video.mp4";
 
 export const MOCK_MOVIES: Movie[] = [
   {
