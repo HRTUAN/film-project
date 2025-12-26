@@ -143,7 +143,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
             await (window.screen.orientation as any).lock('landscape').catch(() => {});
           }
         } else if ((video as any).webkitEnterFullscreen) {
-          // Giải pháp tối thượng cho iOS iPhone
           (video as any).webkitEnterFullscreen();
         }
       }
@@ -216,12 +215,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
         <div className="w-[25%] h-full cursor-pointer" onClick={(e) => handleTapZone('right', e)}></div>
       </div>
 
-      {/* 2. FEEDBACK LAYER (Z-20) */}
+      {/* 2. FEEDBACK LAYER (Z-20) - Bỏ background, icon trắng & to hơn trên Desktop */}
       <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-around overflow-hidden">
         {skipFeedback.visible && (
-          <div className={`flex flex-col items-center animate-ping-once bg-yellow-400/20 p-6 md:p-10 rounded-full backdrop-blur-md ${skipFeedback.type === 'left' ? 'ml-10 mr-auto' : 'mr-10 ml-auto'}`}>
-            {skipFeedback.type === 'left' ? <Rewind size={32} fill="currentColor" className="text-yellow-400" /> : <FastForward size={32} fill="currentColor" className="text-yellow-400" />}
-            <span className="text-white font-black mt-2 text-sm">{skipFeedback.text}</span>
+          <div className={`flex flex-col items-center animate-ping-once ${skipFeedback.type === 'left' ? 'ml-10 mr-auto' : 'mr-10 ml-auto'}`}>
+            {skipFeedback.type === 'left' ? (
+              <Rewind className="text-white w-10 h-10 md:w-24 md:h-24 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]" fill="currentColor" />
+            ) : (
+              <FastForward className="text-white w-10 h-10 md:w-24 md:h-24 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]" fill="currentColor" />
+            )}
+            <span className="text-white font-black mt-2 text-base md:text-3xl uppercase tracking-tighter drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]">
+              {skipFeedback.text}
+            </span>
           </div>
         )}
       </div>
@@ -231,81 +236,81 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
         {isReady ? (
           <button 
             onClick={togglePlay}
-            className="w-14 h-14 md:w-24 md:h-24 bg-yellow-400 rounded-full flex items-center justify-center text-black shadow-2xl pointer-events-auto active:scale-90 transition-transform"
+            className="w-14 h-14 md:w-28 md:h-28 bg-yellow-400 rounded-full flex items-center justify-center text-black shadow-2xl pointer-events-auto active:scale-90 transition-transform"
           >
-            {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} className="ml-1" fill="currentColor" />}
+            {isPlaying ? <Pause size={32} className="md:w-12 md:h-12" fill="currentColor" /> : <Play size={32} className="ml-1 md:w-12 md:h-12" fill="currentColor" />}
           </button>
         ) : (
-          <Loader2 size={32} className="text-yellow-400 animate-spin" />
+          <Loader2 size={32} className="text-yellow-400 animate-spin md:w-16 md:h-16" />
         )}
       </div>
 
       {/* 4. CONTROLS OVERLAY (Z-40) */}
       <div className={`absolute inset-0 z-40 flex flex-col justify-between bg-gradient-to-t from-black/95 via-transparent to-black/40 pointer-events-none transition-opacity duration-500 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0'}`}>
         {/* Top */}
-        <div className="p-3 md:p-5 flex items-center justify-between pointer-events-auto">
+        <div className="p-3 md:p-6 flex items-center justify-between pointer-events-auto">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
-            <span className="text-[8px] md:text-[10px] font-black text-white/50 tracking-widest uppercase">tuanporm Player</span>
+            <span className="text-[8px] md:text-[11px] font-black text-white/50 tracking-widest uppercase">tuanporm Player</span>
           </div>
-          <button onClick={() => window.location.reload()} className="p-2 text-white/30 hover:text-white transition-colors"><RefreshCcw size={14} /></button>
+          <button onClick={() => window.location.reload()} className="p-2 text-white/30 hover:text-white transition-colors"><RefreshCcw size={16} /></button>
         </div>
 
-        {/* Bottom Bar - Hạ cực thấp trên mobile */}
-        <div className="px-3 pb-0.5 md:px-8 md:pb-8 space-y-0.5 md:space-y-4 pointer-events-auto">
+        {/* Bottom Bar */}
+        <div className="px-3 pb-0.5 md:px-10 md:pb-10 space-y-0.5 md:space-y-6 pointer-events-auto">
           {/* Progress Bar */}
           <div className="relative h-4 flex items-center cursor-pointer group" onClick={handleSeek}>
-            <div className="w-full h-0.5 md:h-1 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-yellow-400 shadow-[0_0_8px_#facc15]" style={{ width: `${progress}%` }}></div>
+            <div className="w-full h-0.5 md:h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-yellow-400 shadow-[0_0_12px_#facc15]" style={{ width: `${progress}%` }}></div>
             </div>
-            <div className="absolute h-3 w-3 bg-yellow-400 rounded-full scale-0 group-hover:scale-100 sm:scale-100 transition-transform" style={{ left: `calc(${progress}% - 6px)` }}></div>
+            <div className="absolute h-3 w-3 md:h-4 md:w-4 bg-yellow-400 rounded-full scale-0 group-hover:scale-100 sm:scale-100 transition-transform" style={{ left: `calc(${progress}% - 6px)` }}></div>
           </div>
 
           <div className="flex items-center justify-between pb-1 md:pb-0">
-            <div className="flex items-center gap-1.5 md:gap-6">
+            <div className="flex items-center gap-2 md:gap-8">
               <button onClick={togglePlay} className="p-1.5 text-white hover:text-yellow-400 transition-colors">
-                {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+                {isPlaying ? <Pause className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" /> : <Play className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" />}
               </button>
               
-              {/* Skip Controls: 10m và 1m */}
-              <div className="flex items-center gap-0.5 bg-white/5 p-0.5 rounded-lg border border-white/5">
-                <button onClick={() => skipTime(-600)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center">
-                   <SkipBack size={10} /><span className="text-[5px] font-black uppercase">-10m</span>
+              {/* Skip Controls */}
+              <div className="flex items-center gap-0.5 md:gap-2 bg-white/5 p-0.5 md:p-1.5 rounded-lg md:rounded-xl border border-white/5">
+                <button onClick={() => skipTime(-600)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center group/btn">
+                   <SkipBack className="w-3 h-3 md:w-6 md:h-6" /><span className="text-[5px] md:text-[8px] font-black uppercase">-10m</span>
                 </button>
-                <button onClick={() => skipTime(-60)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center">
-                   <ChevronLeft size={10} /><span className="text-[5px] font-black uppercase">-1m</span>
+                <button onClick={() => skipTime(-60)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center group/btn">
+                   <ChevronLeft className="w-3 h-3 md:w-6 md:h-6" /><span className="text-[5px] md:text-[8px] font-black uppercase">-1m</span>
                 </button>
-                <button onClick={() => skipTime(60)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center">
-                   <ChevronRight size={10} /><span className="text-[5px] font-black uppercase">+1m</span>
+                <button onClick={() => skipTime(60)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center group/btn">
+                   <ChevronRight className="w-3 h-3 md:w-6 md:h-6" /><span className="text-[5px] md:text-[8px] font-black uppercase">+1m</span>
                 </button>
-                <button onClick={() => skipTime(600)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center">
-                   <SkipForward size={10} /><span className="text-[5px] font-black uppercase">+10m</span>
+                <button onClick={() => skipTime(600)} className="p-1 text-white/40 hover:text-yellow-400 flex flex-col items-center group/btn">
+                   <SkipForward className="w-3 h-3 md:w-6 md:h-6" /><span className="text-[5px] md:text-[8px] font-black uppercase">+10m</span>
                 </button>
               </div>
 
-              <div className="hidden md:block text-[10px] font-black text-white/80 tabular-nums">
+              <div className="hidden md:block text-[11px] font-black text-white/80 tabular-nums">
                 <span className="text-yellow-400">{formatTime(currentTime)}</span> / {formatTime(duration)}
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2 md:gap-4">
               <div className="relative">
-                <button onClick={() => setShowSettings(!showSettings)} className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-[7px] md:text-[9px] font-black text-white/60 flex items-center gap-1 hover:bg-white/10 transition-all">
-                  <Settings size={10} /> {speed}
+                <button onClick={() => setShowSettings(!showSettings)} className="px-2 py-1 md:px-3 md:py-2 bg-white/5 border border-white/10 rounded-lg text-[7px] md:text-[10px] font-black text-white/60 flex items-center gap-1.5 hover:bg-white/10 transition-all">
+                  <Settings className="w-2.5 h-2.5 md:w-4 md:h-4" /> {speed}
                 </button>
                 {showSettings && (
-                  <div className="absolute bottom-full right-0 mb-2 w-20 bg-neutral-900 border border-white/10 rounded-xl p-1 flex flex-col gap-1 z-50 shadow-2xl">
+                  <div className="absolute bottom-full right-0 mb-3 w-24 bg-neutral-900 border border-white/10 rounded-2xl p-1.5 z-50 shadow-2xl">
                     {['0.5x', '1x', '1.5x', '2x'].map(s => (
-                      <button key={s} onClick={() => { setSpeed(s); if(videoRef.current) videoRef.current.playbackRate = parseFloat(s); setShowSettings(false); }} className={`p-1.5 text-left rounded text-[8px] font-black ${speed === s ? 'bg-yellow-400 text-black' : 'text-white/40 hover:bg-white/5'}`}>{s}</button>
+                      <button key={s} onClick={() => { setSpeed(s); if(videoRef.current) videoRef.current.playbackRate = parseFloat(s); setShowSettings(false); }} className={`p-2 w-full text-left rounded-lg text-[9px] font-black ${speed === s ? 'bg-yellow-400 text-black' : 'text-white/40 hover:bg-white/5'}`}>{s}</button>
                     ))}
                   </div>
                 )}
               </div>
               <button 
                 onClick={handleFullscreen} 
-                className="px-2.5 py-1.5 md:py-2 bg-yellow-400 text-black rounded-lg md:rounded-xl flex items-center gap-1.5 font-black text-[8px] md:text-[10px] uppercase shadow-lg shadow-yellow-400/20 active:scale-95 transition-all"
+                className="px-2.5 py-1.5 md:px-5 md:py-2.5 bg-yellow-400 text-black rounded-lg md:rounded-2xl flex items-center gap-2 font-black text-[8px] md:text-[11px] uppercase shadow-lg shadow-yellow-400/20 active:scale-95 transition-all"
               >
-                <Maximize size={12} /> <span className="hidden sm:inline">Phóng to</span>
+                <Maximize className="w-3 h-3 md:w-5 md:h-5" /> <span className="hidden sm:inline">Phóng to</span>
               </button>
             </div>
           </div>
@@ -315,7 +320,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
       <style>{`
         @keyframes ping-once {
           0% { transform: scale(0.6); opacity: 0; }
-          50% { transform: scale(1); opacity: 1; }
+          40% { transform: scale(1.1); opacity: 1; }
           100% { transform: scale(1.4); opacity: 0; }
         }
         .animate-ping-once {
