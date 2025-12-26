@@ -144,18 +144,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
     
     try {
       if (document.fullscreenElement) {
-        await document.exitFullscreen();
-        if (screen.orientation && screen.orientation.unlock) {
-          screen.orientation.unlock();
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+        if (window.screen.orientation && window.screen.orientation.unlock) {
+          window.screen.orientation.unlock();
         }
       } else {
-        await containerRef.current.requestFullscreen();
-        // Cố gắng khóa màn hình nằm ngang trên thiết bị di động
-        if (screen.orientation && (screen.orientation as any).lock) {
-          try {
-            await (screen.orientation as any).lock('landscape');
-          } catch (e) {
-            console.warn("Screen orientation lock failed", e);
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+          // Cố gắng khóa màn hình nằm ngang trên thiết bị di động
+          if (window.screen.orientation && (window.screen.orientation as any).lock) {
+            try {
+              await (window.screen.orientation as any).lock('landscape');
+            } catch (e) {
+              console.warn("Screen orientation lock failed", e);
+            }
           }
         }
       }
@@ -183,7 +187,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full aspect-video bg-black rounded-2xl overflow-hidden group shadow-2xl ring-1 ring-neutral-800 select-none ${isFullscreen ? 'rounded-none border-none' : ''}`}
+      className={`relative w-full aspect-video bg-black rounded-2xl overflow-hidden group shadow-2xl ring-1 ring-neutral-800 select-none ${isFullscreen ? 'rounded-none border-none h-screen w-screen' : ''}`}
       style={{ cursor: showControls ? 'default' : 'none' }}
       onMouseMove={() => setShowControls(true)}
       onClick={() => setShowControls(!showControls)}
@@ -199,16 +203,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
 
       {/* Touch Zones for Skip */}
       <div className="absolute inset-0 z-10 flex pointer-events-none">
-        <div className="w-[30%] h-full pointer-events-auto" onDoubleClick={() => skipTime(-10)}></div>
-        <div className="flex-grow h-full pointer-events-auto" onClick={(e) => { e.stopPropagation(); togglePlay(); }}></div>
-        <div className="w-[30%] h-full pointer-events-auto" onDoubleClick={() => skipTime(10)}></div>
+        <div className="w-[30%] h-full pointer-events-auto cursor-pointer" onDoubleClick={() => skipTime(-10)}></div>
+        <div className="flex-grow h-full pointer-events-auto cursor-pointer" onClick={(e) => { e.stopPropagation(); togglePlay(); }}></div>
+        <div className="w-[30%] h-full pointer-events-auto cursor-pointer" onDoubleClick={() => skipTime(10)}></div>
       </div>
 
       {/* Feedback Overlay */}
       <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-around">
         {skipFeedback.visible && (
           <div className={`flex flex-col items-center animate-ping-once bg-white/10 p-6 md:p-10 rounded-full backdrop-blur-md ${skipFeedback.type === 'left' ? 'mr-auto ml-10' : 'ml-auto mr-10'}`}>
-            {skipFeedback.type === 'left' ? <Rewind size={40} fill="white" /> : <FastForward size={40} fill="white" />}
+            {skipFeedback.type === 'left' ? <Rewind className="w-10 h-10 md:w-16 md:h-16" fill="white" /> : <FastForward className="w-10 h-10 md:w-16 md:h-16" fill="white" />}
             <span className="text-xl font-black text-white mt-2">{skipFeedback.text}</span>
           </div>
         )}
@@ -242,10 +246,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ embedUrl, onProgress, initial
         </div>
 
         {/* Center Play Button (Mobile focused) */}
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center pointer-events-none">
            {!isPlaying && isReady && (
-             <button onClick={togglePlay} className="w-16 h-16 md:w-24 md:h-24 bg-yellow-400 rounded-full flex items-center justify-center text-black shadow-2xl hover:scale-110 transition-transform">
-               <Play size={32} md:size={48} fill="currentColor" className="ml-1" />
+             <button onClick={togglePlay} className="w-16 h-16 md:w-24 md:h-24 bg-yellow-400 rounded-full flex items-center justify-center text-black shadow-2xl hover:scale-110 transition-transform pointer-events-auto">
+               <Play className="w-8 h-8 md:w-12 md:h-12 ml-1" fill="currentColor" />
              </button>
            )}
         </div>
